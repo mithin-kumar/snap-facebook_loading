@@ -5,8 +5,8 @@ import glob
 import os, os.path
 import math
 
-pathhack = os.path.dirname(os.path.realpath(__file__))
-
+pathhack = '/content/drive/MyDrive/mini-project/snap-facebook_loading'
+print(pathhack)
 feat_file_name = "%s/feature_map.txt" % (pathhack,)
 feature_index = {}  #numeric index to name
 inverted_feature_index = {} #name to numeric index
@@ -60,27 +60,32 @@ def load_nodes():
     assert len(feature_index) > 0, "call load_features() first"
     global network
     global ego_nodes
-
+    
+    print(pathhack)
     # get all the node ids by looking at the files
-    ego_nodes = [int(x.split("/")[-1].split('.')[0]) for x in glob.glob("%s/data/*.featnames" % (pathhack,))]
+    ego_nodes = [x.split("/")[-1].split('.')[0] for x in glob.glob("%s/data/*.featnames" % (pathhack,))]
     node_ids = ego_nodes
-
+    print(ego_nodes)
     # parse each node
     for node_id in node_ids:
-        featname_file = open("%s/data/%d.featnames" % (pathhack,node_id), 'r')
-        feat_file     = open("%s/data/%d.feat"      % (pathhack,node_id), 'r')
-        egofeat_file  = open("%s/data/%d.egofeat"   % (pathhack,node_id), 'r')
-        edge_file     = open("%s/data/%d.edges"     % (pathhack,node_id), 'r')
-
+        print(node_id)
+        print(pathhack)
+        featname_file = open(f"{pathhack}/data/{node_id}.featnames", 'r')
+        feat_file     = open(f"{pathhack}/data/{node_id}.feat"      , 'r')
+        egofeat_file  = open(f"{pathhack}/data/{node_id}.egofeat"   , 'r')
+        edge_file     = open(f"{pathhack}/data/{node_id}.edges"     , 'r')
+        
+        node_id = int(node_id)
         # parse ego node
         network.add_node(node_id)
         # 0 1 0 0 0 ...
         ego_features = [int(x) for x in egofeat_file.readline().split(' ')]
         i = 0
-        network.node[node_id]['features'] = np.zeros(len(feature_index))
+        network._node[node_id]['features'] = np.zeros(len(feature_index))
+        print(network._node[node_id]['features'])
         for line in featname_file:
             key, val = parse_featname_line(line)
-            network.node[node_id]['features'][key] = ego_features[i] + 1
+            network._node[node_id]["features"][key] = ego_features[i] + 1
             i += 1
 
         # parse neighboring nodes
@@ -90,11 +95,11 @@ def load_nodes():
             node_id = split[0]
             features = split[1:]
             network.add_node(node_id)
-            network.node[node_id]['features'] = np.zeros(len(feature_index))
+            network._node[node_id]['features'] = np.zeros(len(feature_index))
             i = 0
             for line in featname_file:
                 key, val = parse_featname_line(line)
-                network.node[node_id]['features'][key] = features[i]
+                network._node[node_id]['features'][key] = features[i]
                 i += 1
             
         featname_file.close()
@@ -140,25 +145,25 @@ def universal_feature(feature_index):
     return len([x for x in network.nodes_iter() if network.node[x]['feautures'][feature_index] > 0]) // network.order() == 1
 
 if __name__ == '__main__':
-    print "Running tests."
-    print "Loading network..."
+    print ("Running tests.")
+    print ("Loading network...")
     load_network()
-    print "done."
+    print ("done.")
 
     failures = 0
     def test(actual, expected, test_name):
         global failures  #lol python scope
         try:
-            print "testing %s..." % (test_name,)
+            print("testing %s..." % (test_name,))
             assert actual == expected, "%s failed (%s != %s)!" % (test_name,actual, expected)
-            print "%s passed (%s == %s)." % (test_name,actual,expected)
+            print("%s passed (%s == %s)." % (test_name,actual,expected))
         except AssertionError as e:
-            print e
+            print( e)
             failures += 1
     
     test(network.order(), 4039, "order")
     test(network.size(), 88234, "size")
     test(round(nx.average_clustering(network),4), 0.6055, "clustering")
-    print "%d tests failed." % (failures,)
+    print ("%d tests failed." % (failures,))
     
     
